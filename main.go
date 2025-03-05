@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yourusername/rlama/cmd"
+	"github.com/dontizi/rlama/cmd"
 )
 
 func main() {

@@ -34,9 +34,6 @@ func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
 		return fmt.Errorf("un RAG avec le nom '%s' existe déjà", ragName)
 	}
 
-	// Créer le système RAG
-	rag := domain.NewRagSystem(ragName, modelName)
-
 	// Charger les documents
 	docs, err := rs.documentLoader.LoadDocumentsFromFolder(folderPath)
 	if err != nil {
@@ -44,8 +41,13 @@ func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
 	}
 
 	if len(docs) == 0 {
-		return fmt.Errorf("aucun document supporté trouvé dans le dossier %s", folderPath)
+		return fmt.Errorf("aucun document valide trouvé dans le dossier %s", folderPath)
 	}
+
+	fmt.Printf("Chargement réussi de %d documents. Génération des embeddings...\n", len(docs))
+	
+	// Créer le système RAG
+	rag := domain.NewRagSystem(ragName, modelName)
 
 	// Générer les embeddings pour tous les documents
 	err = rs.embeddingService.GenerateEmbeddings(docs, modelName)
@@ -64,6 +66,7 @@ func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
 		return fmt.Errorf("erreur lors de la sauvegarde du RAG: %w", err)
 	}
 
+	fmt.Printf("RAG créé avec %d documents indexés.\n", len(docs))
 	return nil
 }
 

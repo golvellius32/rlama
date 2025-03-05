@@ -114,4 +114,49 @@ func (r *RagRepository) Load(ragName string) (*domain.RagSystem, error) {
 	}
 	
 	return &ragInfo, nil
+}
+
+// ListAll renvoie la liste de tous les systèmes RAG disponibles
+func (r *RagRepository) ListAll() ([]string, error) {
+	// Vérifie si le dossier base existe
+	_, err := os.Stat(r.basePath)
+	if os.IsNotExist(err) {
+		return []string{}, nil // Aucun RAG disponible
+	}
+	
+	// Lit le contenu du dossier
+	entries, err := os.ReadDir(r.basePath)
+	if err != nil {
+		return nil, fmt.Errorf("impossible de lire le dossier des RAGs: %w", err)
+	}
+	
+	var ragNames []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Vérifie s'il s'agit d'un dossier RAG valide (contient info.json)
+			infoPath := filepath.Join(r.basePath, entry.Name(), "info.json")
+			if _, err := os.Stat(infoPath); err == nil {
+				ragNames = append(ragNames, entry.Name())
+			}
+		}
+	}
+	
+	return ragNames, nil
+}
+
+// Delete supprime un système RAG
+func (r *RagRepository) Delete(ragName string) error {
+	// Vérifier si le RAG existe
+	if !r.Exists(ragName) {
+		return fmt.Errorf("le système RAG '%s' n'existe pas", ragName)
+	}
+	
+	// Supprimer le dossier RAG complet
+	ragPath := r.getRagPath(ragName)
+	err := os.RemoveAll(ragPath)
+	if err != nil {
+		return fmt.Errorf("erreur lors de la suppression du système RAG '%s': %w", ragName, err)
+	}
+	
+	return nil
 } 

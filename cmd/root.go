@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	// Supprimez ou commentez ces deux lignes si elles ne sont pas utilisées
+	// "fmt"
+	// "os"
 
 	"github.com/spf13/cobra"
 )
