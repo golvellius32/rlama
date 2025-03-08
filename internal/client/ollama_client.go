@@ -139,4 +139,41 @@ func (c *OllamaClient) GenerateCompletion(model, prompt string) (string, error) 
 	}
 
 	return genResp.Response, nil
+}
+
+// IsOllamaRunning checks if Ollama is installed and running
+func (c *OllamaClient) IsOllamaRunning() (bool, error) {
+	resp, err := c.Client.Get(fmt.Sprintf("%s/api/version", c.BaseURL))
+	if err != nil {
+		return false, fmt.Errorf("Ollama is not accessible: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("Ollama responded with error code: %d", resp.StatusCode)
+	}
+	
+	return true, nil
+}
+
+// CheckOllamaAndModel verifies if Ollama is running and if the specified model is available
+func (c *OllamaClient) CheckOllamaAndModel(modelName string) error {
+	// Check if Ollama is running
+	running, err := c.IsOllamaRunning()
+	if err != nil {
+		return fmt.Errorf("⚠️ Ollama is not installed or not running.\n"+
+			"RLAMA requires Ollama to function.\n"+
+			"Please install Ollama with: curl -fsSL https://ollama.com/install.sh | sh\n"+
+			"Then start it before using RLAMA.")
+	}
+	
+	if !running {
+		return fmt.Errorf("⚠️ Ollama is not running.\n"+
+			"Please start Ollama before using RLAMA.")
+	}
+	
+	// Check if model is available (optional)
+	// This check could be added here
+	
+	return nil
 } 

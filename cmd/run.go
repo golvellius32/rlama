@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/dontizi/rlama/internal/service"
+	"github.com/dontizi/rlama/internal/client"
 )
 
 var runCmd = &cobra.Command{
@@ -19,6 +20,12 @@ Example: rlama run rag1`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ragName := args[0]
+
+		// Check if Ollama is installed and running
+		ollamaClient := client.NewOllamaClient()
+		if err := ollamaClient.CheckOllamaAndModel(""); err != nil {
+			return err
+		}
 
 		ragService := service.NewRagService()
 		rag, err := ragService.LoadRag(ragName)

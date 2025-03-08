@@ -29,6 +29,11 @@ func NewRagService() *RagService {
 
 // CreateRag creates a new RAG system
 func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
+	// Check if Ollama is available
+	if err := rs.ollamaClient.CheckOllamaAndModel(modelName); err != nil {
+		return err
+	}
+
 	// Check if the RAG already exists
 	if rs.ragRepository.Exists(ragName) {
 		return fmt.Errorf("a RAG with name '%s' already exists", ragName)
@@ -82,6 +87,11 @@ func (rs *RagService) LoadRag(ragName string) (*domain.RagSystem, error) {
 
 // Query performs a query on a RAG system
 func (rs *RagService) Query(rag *domain.RagSystem, query string) (string, error) {
+	// Check if Ollama is available
+	if err := rs.ollamaClient.CheckOllamaAndModel(rag.ModelName); err != nil {
+		return "", err
+	}
+
 	// Generate embedding for the query
 	queryEmbedding, err := rs.embeddingService.GenerateQueryEmbedding(query, rag.ModelName)
 	if err != nil {
