@@ -8,21 +8,21 @@ import (
 )
 
 var ragCmd = &cobra.Command{
-	Use:   "rag [modèle] [nom-rag] [chemin-dossier]",
-	Short: "Crée un nouveau système RAG",
-	Long: `Crée un nouveau système RAG en indexant tous les documents du dossier spécifié.
-Exemple: rlama rag llama3.2 rag1 ./documents
+	Use:   "rag [model] [rag-name] [folder-path]",
+	Short: "Create a new RAG system",
+	Long: `Create a new RAG system by indexing all documents in the specified folder.
+Example: rlama rag llama3.2 rag1 ./documents
 
-Le dossier sera créé s'il n'existe pas encore. 
-Les formats supportés incluent: .txt, .md, .html, .json, .csv, et divers fichiers de code source.`,
+The folder will be created if it doesn't exist yet.
+Supported formats include: .txt, .md, .html, .json, .csv, and various source code files.`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		modelName := args[0]
 		ragName := args[1]
 		folderPath := args[2]
 
-		// Afficher un message pour indiquer que le processus a commencé
-		fmt.Printf("Création du RAG '%s' avec le modèle '%s' à partir du dossier '%s'...\n", 
+		// Display a message to indicate that the process has started
+		fmt.Printf("Creating RAG '%s' with model '%s' from folder '%s'...\n", 
 			ragName, modelName, folderPath)
 
 		ragService := service.NewRagService()
@@ -31,7 +31,7 @@ Les formats supportés incluent: .txt, .md, .html, .json, .csv, et divers fichie
 			return err
 		}
 
-		fmt.Printf("RAG '%s' créé avec succès.\n", ragName)
+		fmt.Printf("RAG '%s' created successfully.\n", ragName)
 		return nil
 	},
 }

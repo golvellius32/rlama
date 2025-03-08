@@ -25,44 +25,44 @@ type GitHubRelease struct {
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Vérifie et installe les mises à jour de RLAMA",
-	Long: `Vérifie si une nouvelle version de RLAMA est disponible et l'installe si c'est le cas.
-Exemple: rlama update
+	Short: "Check and install RLAMA updates",
+	Long: `Check if a new version of RLAMA is available and install it if so.
+Example: rlama update
 
-Par défaut, la commande demande une confirmation avant d'installer la mise à jour.
-Utilisez le flag --force pour mettre à jour sans confirmation.`,
+By default, the command asks for confirmation before installing the update.
+Use the --force flag to update without confirmation.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Vérification des mises à jour de RLAMA...")
+		fmt.Println("Checking for RLAMA updates...")
 		
-		// Vérifier la dernière version disponible
+		// Check the latest available version
 		latestRelease, hasUpdates, err := checkForUpdates()
 		if err != nil {
-			return fmt.Errorf("erreur lors de la vérification des mises à jour: %w", err)
+			return fmt.Errorf("error checking for updates: %w", err)
 		}
 		
 		if !hasUpdates {
-			fmt.Printf("Vous utilisez déjà la dernière version de RLAMA (%s).\n", Version)
+			fmt.Printf("You are already using the latest version of RLAMA (%s).\n", Version)
 			return nil
 		}
 		
 		latestVersion := strings.TrimPrefix(latestRelease.TagName, "v")
 		
-		// Demander confirmation sauf si --force est spécifié
+		// Ask for confirmation unless --force is specified
 		if !forceUpdate {
-			fmt.Printf("Une nouvelle version de RLAMA est disponible (%s). Voulez-vous l'installer? (o/n): ", latestVersion)
+			fmt.Printf("A new version of RLAMA is available (%s). Do you want to install it? (y/n): ", latestVersion)
 			var response string
 			fmt.Scanln(&response)
 			
 			response = strings.ToLower(strings.TrimSpace(response))
-			if response != "o" && response != "oui" {
-				fmt.Println("Mise à jour annulée.")
+			if response != "y" && response != "yes" {
+				fmt.Println("Update cancelled.")
 				return nil
 			}
 		}
 		
-		fmt.Printf("Installation de RLAMA %s...\n", latestVersion)
+		fmt.Printf("Installing RLAMA %s...\n", latestVersion)
 		
-		// Déterminer le binaire à télécharger en fonction du système d'exploitation et de l'architecture
+		// Determine which binary to download based on OS and architecture
 		var assetURL string
 		osName := runtime.GOOS
 		archName := runtime.GOARCH
@@ -76,72 +76,72 @@ Utilisez le flag --force pour mettre à jour sans confirmation.`,
 		}
 		
 		if assetURL == "" {
-			return fmt.Errorf("aucun binaire trouvé pour votre système (%s_%s)", osName, archName)
+			return fmt.Errorf("no binary found for your system (%s_%s)", osName, archName)
 		}
 		
-		// Télécharger le binaire
+		// Download the binary
 		execPath, err := os.Executable()
 		if err != nil {
-			return fmt.Errorf("impossible de déterminer l'emplacement de l'exécutable: %w", err)
+			return fmt.Errorf("unable to determine executable location: %w", err)
 		}
 		
-		// Créer un fichier temporaire pour le téléchargement
+		// Create a temporary file for the download
 		tempFile := execPath + ".new"
 		out, err := os.Create(tempFile)
 		if err != nil {
-			return fmt.Errorf("erreur lors de la création du fichier temporaire: %w", err)
+			return fmt.Errorf("error creating temporary file: %w", err)
 		}
 		defer out.Close()
 		
-		// Télécharger le binaire
+		// Download the binary
 		resp, err := http.Get(assetURL)
 		if err != nil {
-			return fmt.Errorf("erreur lors du téléchargement: %w", err)
+			return fmt.Errorf("download error: %w", err)
 		}
 		defer resp.Body.Close()
 		
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
-			return fmt.Errorf("erreur lors de l'écriture du fichier: %w", err)
+			return fmt.Errorf("error writing file: %w", err)
 		}
 		
-		// Rendre le binaire exécutable
+		// Make the binary executable
 		err = os.Chmod(tempFile, 0755)
 		if err != nil {
-			return fmt.Errorf("erreur lors de la définition des permissions: %w", err)
+			return fmt.Errorf("error setting permissions: %w", err)
 		}
 		
-		// Remplacer l'ancien binaire par le nouveau
+		// Replace the old binary with the new one
 		backupPath := execPath + ".bak"
-		os.Rename(execPath, backupPath) // Sauvegarde de l'ancien binaire
+		os.Rename(execPath, backupPath) // Backup the old binary
 		err = os.Rename(tempFile, execPath)
 		if err != nil {
-			// En cas d'erreur, restaurer l'ancien binaire
+			// In case of error, restore the old binary
 			os.Rename(backupPath, execPath)
-			return fmt.Errorf("erreur lors du remplacement du binaire: %w", err)
+			return fmt.Errorf("error replacing binary: %w", err)
 		}
 		
-		fmt.Printf("RLAMA a été mis à jour vers la version %s.\n", latestVersion)
+		fmt.Printf("RLAMA has been updated to version %s.\n", latestVersion)
 		return nil
 	},
 }
 
-// checkForUpdates vérifie si des mises à jour sont disponibles en interrogeant l'API GitHub
+// checkForUpdates checks if updates are available by querying the GitHub API
 func checkForUpdates() (*GitHubRelease, bool, error) {
-	// Interroger l'API GitHub pour obtenir la dernière release
+	// Query the GitHub API to get the latest release
 	resp, err := http.Get("https://api.github.com/repos/dontizi/rlama/releases/latest")
 	if err != nil {
 		return nil, false, err
 	}
 	defer resp.Body.Close()
 	
-	// Analyser la réponse JSON
+	// Parse the JSON response
 	var release GitHubRelease
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return nil, false, err
 	}
 	
-	// Vérifier si la version est plus récente
+	// Check if the version is newer
 	latestVersion := strings.TrimPrefix(release.TagName, "v")
 	hasUpdates := latestVersion != Version
 	
@@ -150,5 +150,5 @@ func checkForUpdates() (*GitHubRelease, bool, error) {
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
-	updateCmd.Flags().BoolVarP(&forceUpdate, "force", "f", false, "Mettre à jour sans demander de confirmation")
+	updateCmd.Flags().BoolVarP(&forceUpdate, "force", "f", false, "Update without asking for confirmation")
 } 

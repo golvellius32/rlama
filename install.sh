@@ -2,7 +2,7 @@
 
 set -e
 
-# Couleurs pour les messages
+# Colors for messages
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -15,74 +15,74 @@ echo "
 Retrieval-Augmented Language Model Adapter
 "
 
-# Fonction pour vérifier si une commande existe
+# Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Vérifier si Go est installé
+# Check if Go is installed
 if ! command_exists go; then
-    echo -e "${RED}Go n'est pas installé.${NC}"
-    echo "RLAMA nécessite Go pour être compilé."
-    echo "Installez Go depuis https://golang.org/dl/"
+    echo -e "${RED}Go is not installed.${NC}"
+    echo "RLAMA requires Go to be compiled."
+    echo "Install Go from https://golang.org/dl/"
     exit 1
 fi
 
-# Vérifier si Ollama est installé
+# Check if Ollama is installed
 if ! command_exists ollama; then
-    echo -e "${YELLOW}⚠️ Ollama n'est pas installé.${NC}"
-    echo "RLAMA nécessite Ollama pour fonctionner."
-    echo "Vous pouvez installer Ollama avec:"
+    echo -e "${YELLOW}⚠️ Ollama is not installed.${NC}"
+    echo "RLAMA requires Ollama to function."
+    echo "You can install Ollama with:"
     echo "curl -fsSL https://ollama.com/install.sh | sh"
     
-    read -p "Voulez-vous installer Ollama maintenant? (o/n): " install_ollama
-    if [[ "$install_ollama" =~ ^[Oo]$ ]]; then
-        echo "Installation d'Ollama..."
+    read -p "Do you want to install Ollama now? (y/n): " install_ollama
+    if [[ "$install_ollama" =~ ^[Yy]$ ]]; then
+        echo "Installing Ollama..."
         curl -fsSL https://ollama.com/install.sh | sh
     else
-        echo "Veuillez installer Ollama avant d'utiliser RLAMA."
+        echo "Please install Ollama before using RLAMA."
     fi
 fi
 
-# Vérifier si Ollama est en cours d'exécution
+# Check if Ollama is running
 if ! curl -s http://localhost:11434/api/version &>/dev/null; then
-    echo -e "${YELLOW}⚠️ Le service Ollama ne semble pas fonctionner.${NC}"
-    echo "Veuillez démarrer Ollama avant d'utiliser RLAMA."
+    echo -e "${YELLOW}⚠️ The Ollama service doesn't seem to be running.${NC}"
+    echo "Please start Ollama before using RLAMA."
 fi
 
-# Vérifier si le modèle llama3 est disponible
+# Check if the llama3 model is available
 if command_exists ollama; then
     if ! ollama list 2>/dev/null | grep -q "llama3"; then
-        echo -e "${YELLOW}⚠️ Le modèle llama3 n'est pas disponible dans Ollama.${NC}"
-        echo "Pour une meilleure expérience, vous devriez l'installer avec:"
+        echo -e "${YELLOW}⚠️ The llama3 model is not available in Ollama.${NC}"
+        echo "For a better experience, you should install it with:"
         echo "ollama pull llama3"
     fi
 fi
 
-# Créer le répertoire d'installation
+# Create installation directory
 INSTALL_DIR="/usr/local/bin"
 DATA_DIR="$HOME/.rlama"
 
-echo "Installation de RLAMA..."
-echo "Clonage du dépôt..."
+echo "Installing RLAMA..."
+echo "Cloning repository..."
 
-# Utiliser un répertoire temporaire pour le clonage et la compilation
+# Use a temporary directory for cloning and building
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 
-# Cloner le dépôt RLAMA (à remplacer par votre URL de dépôt)
+# Clone the RLAMA repository (replace with your repository URL)
 git clone https://github.com/dontizi/rlama.git .
 
-# Compilation
-echo "Compilation de RLAMA..."
+# Build
+echo "Building RLAMA..."
 go build -o rlama
 
-# Installation
-echo "Installation de l'exécutable..."
+# Install
+echo "Installing executable..."
 mkdir -p "$DATA_DIR"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS - utiliser sudo si nécessaire pour /usr/local/bin
+    # macOS - use sudo if necessary for /usr/local/bin
     if [ -w "$INSTALL_DIR" ]; then
         cp rlama "$INSTALL_DIR/"
     else
@@ -95,16 +95,16 @@ else
     sudo chmod +x "$INSTALL_DIR/rlama"
 fi
 
-# Nettoyage
+# Cleanup
 cd "$HOME"
 rm -rf "$TEMP_DIR"
 
-echo -e "${GREEN}✅ RLAMA a été installé avec succès!${NC}"
+echo -e "${GREEN}✅ RLAMA has been successfully installed!${NC}"
 echo ""
-echo "Vous pouvez maintenant utiliser RLAMA avec les commandes suivantes:"
-echo "- rlama rag [modèle] [nom-rag] [chemin-dossier] : Créer un nouveau système RAG"
-echo "- rlama run [nom-rag] : Exécuter un système RAG"
-echo "- rlama list : Lister tous les systèmes RAG disponibles"
-echo "- rlama delete [nom-rag] : Supprimer un système RAG"
+echo "You can now use RLAMA with the following commands:"
+echo "- rlama rag [model] [rag-name] [folder-path] : Create a new RAG system"
+echo "- rlama run [rag-name] : Run a RAG system"
+echo "- rlama list : List all available RAG systems"
+echo "- rlama delete [rag-name] : Delete a RAG system"
 echo ""
-echo "Exemple: rlama rag llama3 monrag ./documents" 
+echo "Example: rlama rag llama3 myrag ./documents" 

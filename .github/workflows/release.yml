@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 go build -o dist/rlama_linux_amd64
+          GOOS=linux GOARCH=arm64 go build -o dist/rlama_linux_arm64
+          GOOS=darwin GOARCH=amd64 go build -o dist/rlama_darwin_amd64
+          GOOS=darwin GOARCH=arm64 go build -o dist/rlama_darwin_arm64
+          GOOS=windows GOARCH=amd64 go build -o dist/rlama_windows_amd64.exe
+          chmod +x dist/*
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/rlama_linux_amd64
+            dist/rlama_linux_arm64
+            dist/rlama_darwin_amd64
+            dist/rlama_darwin_arm64
+            dist/rlama_windows_amd64.exe
+          draft: false
+          prerelease: false 

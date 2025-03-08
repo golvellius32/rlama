@@ -10,14 +10,14 @@ import (
 	"github.com/dontizi/rlama/pkg/vector"
 )
 
-// RagRepository gère la persistance des systèmes RAG
+// RagRepository manages the persistence of RAG systems
 type RagRepository struct {
 	basePath string
 }
 
-// NewRagRepository crée une nouvelle instance de RagRepository
+// NewRagRepository creates a new instance of RagRepository
 func NewRagRepository() *RagRepository {
-	// Utilisez ~/.rlama comme dossier de données par défaut
+	// Use ~/.rlama as the default data folder
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		homeDir = "."
@@ -25,7 +25,7 @@ func NewRagRepository() *RagRepository {
 	
 	basePath := filepath.Join(homeDir, ".rlama")
 	
-	// Créer le dossier s'il n'existe pas
+	// Create the folder if it doesn't exist
 	os.MkdirAll(basePath, 0755)
 	
 	return &RagRepository{
@@ -33,107 +33,107 @@ func NewRagRepository() *RagRepository {
 	}
 }
 
-// getRagPath renvoie le chemin complet pour un RAG donné
+// getRagPath returns the complete path for a given RAG
 func (r *RagRepository) getRagPath(ragName string) string {
 	return filepath.Join(r.basePath, ragName)
 }
 
-// getRagInfoPath renvoie le chemin du fichier d'information RAG
+// getRagInfoPath returns the path of the RAG information file
 func (r *RagRepository) getRagInfoPath(ragName string) string {
 	return filepath.Join(r.getRagPath(ragName), "info.json")
 }
 
-// getRagVectorStorePath renvoie le chemin du fichier de stockage des vecteurs
+// getRagVectorStorePath returns the path of the vector storage file
 func (r *RagRepository) getRagVectorStorePath(ragName string) string {
 	return filepath.Join(r.getRagPath(ragName), "vectors.json")
 }
 
-// Exists vérifie si un RAG existe
+// Exists checks if a RAG exists
 func (r *RagRepository) Exists(ragName string) bool {
 	_, err := os.Stat(r.getRagInfoPath(ragName))
 	return err == nil
 }
 
-// Save sauvegarde un système RAG
+// Save saves a RAG system
 func (r *RagRepository) Save(rag *domain.RagSystem) error {
 	ragPath := r.getRagPath(rag.Name)
 	
-	// Créer le dossier pour ce RAG
+	// Create the folder for this RAG
 	err := os.MkdirAll(ragPath, 0755)
 	if err != nil {
-		return fmt.Errorf("impossible de créer le dossier pour le RAG: %w", err)
+		return fmt.Errorf("unable to create folder for RAG: %w", err)
 	}
 	
-	// Sauvegarder les informations du RAG
-	ragInfo := *rag // Copie pour éviter de modifier l'original
+	// Save RAG information
+	ragInfo := *rag // Copy to avoid modifying the original
 	
-	// Sérialiser et sauvegarder le fichier info.json
+	// Serialize and save the info.json file
 	infoJSON, err := json.MarshalIndent(ragInfo, "", "  ")
 	if err != nil {
-		return fmt.Errorf("impossible de sérialiser les informations du RAG: %w", err)
+		return fmt.Errorf("unable to serialize RAG information: %w", err)
 	}
 	
 	err = os.WriteFile(r.getRagInfoPath(rag.Name), infoJSON, 0644)
 	if err != nil {
-		return fmt.Errorf("impossible de sauvegarder les informations du RAG: %w", err)
+		return fmt.Errorf("unable to save RAG information: %w", err)
 	}
 	
-	// Sauvegarder le Vector Store
+	// Save the Vector Store
 	err = rag.VectorStore.Save(r.getRagVectorStorePath(rag.Name))
 	if err != nil {
-		return fmt.Errorf("impossible de sauvegarder le Vector Store: %w", err)
+		return fmt.Errorf("unable to save Vector Store: %w", err)
 	}
 	
 	return nil
 }
 
-// Load charge un système RAG
+// Load loads a RAG system
 func (r *RagRepository) Load(ragName string) (*domain.RagSystem, error) {
-	// Vérifier si le RAG existe
+	// Check if the RAG exists
 	if !r.Exists(ragName) {
-		return nil, fmt.Errorf("le RAG '%s' n'existe pas", ragName)
+		return nil, fmt.Errorf("RAG '%s' does not exist", ragName)
 	}
 	
-	// Charger les informations du RAG
+	// Load RAG information
 	infoBytes, err := os.ReadFile(r.getRagInfoPath(ragName))
 	if err != nil {
-		return nil, fmt.Errorf("impossible de lire les informations du RAG: %w", err)
+		return nil, fmt.Errorf("unable to read RAG information: %w", err)
 	}
 	
 	var ragInfo domain.RagSystem
 	err = json.Unmarshal(infoBytes, &ragInfo)
 	if err != nil {
-		return nil, fmt.Errorf("impossible de désérialiser les informations du RAG: %w", err)
+		return nil, fmt.Errorf("unable to deserialize RAG information: %w", err)
 	}
 	
-	// Créer un nouveau Vector Store et le charger à partir du fichier
+	// Create a new Vector Store and load it from the file
 	ragInfo.VectorStore = vector.NewStore()
 	err = ragInfo.VectorStore.Load(r.getRagVectorStorePath(ragName))
 	if err != nil {
-		return nil, fmt.Errorf("impossible de charger le Vector Store: %w", err)
+		return nil, fmt.Errorf("unable to load Vector Store: %w", err)
 	}
 	
 	return &ragInfo, nil
 }
 
-// ListAll renvoie la liste de tous les systèmes RAG disponibles
+// ListAll returns the list of all available RAG systems
 func (r *RagRepository) ListAll() ([]string, error) {
-	// Vérifie si le dossier base existe
+	// Check if the base folder exists
 	_, err := os.Stat(r.basePath)
 	if os.IsNotExist(err) {
-		return []string{}, nil // Aucun RAG disponible
+		return []string{}, nil // No RAGs available
 	}
 	
-	// Lit le contenu du dossier
+	// Read the folder contents
 	entries, err := os.ReadDir(r.basePath)
 	if err != nil {
-		return nil, fmt.Errorf("impossible de lire le dossier des RAGs: %w", err)
+		return nil, fmt.Errorf("unable to read RAGs folder: %w", err)
 	}
 	
 	var ragNames []string
 	for _, entry := range entries {
 		if entry.IsDir() {
-			// Vérifie s'il s'agit d'un dossier RAG valide (contient info.json)
+			// Check if it's a valid RAG folder (contains info.json)
 			infoPath := filepath.Join(r.basePath, entry.Name(), "info.json")
 			if _, err := os.Stat(infoPath); err == nil {
 				ragNames = append(ragNames, entry.Name())
@@ -144,18 +144,18 @@ func (r *RagRepository) ListAll() ([]string, error) {
 	return ragNames, nil
 }
 
-// Delete supprime un système RAG
+// Delete deletes a RAG system
 func (r *RagRepository) Delete(ragName string) error {
-	// Vérifier si le RAG existe
+	// Check if the RAG exists
 	if !r.Exists(ragName) {
-		return fmt.Errorf("le système RAG '%s' n'existe pas", ragName)
+		return fmt.Errorf("RAG system '%s' does not exist", ragName)
 	}
 	
-	// Supprimer le dossier RAG complet
+	// Delete the complete RAG folder
 	ragPath := r.getRagPath(ragName)
 	err := os.RemoveAll(ragPath)
 	if err != nil {
-		return fmt.Errorf("erreur lors de la suppression du système RAG '%s': %w", ragName, err)
+		return fmt.Errorf("error while deleting RAG system '%s': %w", ragName, err)
 	}
 	
 	return nil

@@ -11,11 +11,11 @@ import (
 )
 
 var runCmd = &cobra.Command{
-	Use:   "run [nom-rag]",
-	Short: "Exécute un système RAG",
-	Long: `Exécute un système RAG précédemment créé. 
-Démarre une session interactive pour interagir avec le système RAG.
-Exemple: rlama run rag1`,
+	Use:   "run [rag-name]",
+	Short: "Run a RAG system",
+	Long: `Run a previously created RAG system. 
+Starts an interactive session to interact with the RAG system.
+Example: rlama run rag1`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ragName := args[0]
@@ -26,8 +26,8 @@ Exemple: rlama run rag1`,
 			return err
 		}
 
-		fmt.Printf("RAG '%s' chargé. Modèle: %s\n", rag.Name, rag.ModelName)
-		fmt.Println("Tapez votre question (ou 'exit' pour quitter):")
+		fmt.Printf("RAG '%s' loaded. Model: %s\n", rag.Name, rag.ModelName)
+		fmt.Println("Type your question (or 'exit' to quit):")
 
 		scanner := bufio.NewScanner(os.Stdin)
 		for {
@@ -47,7 +47,7 @@ Exemple: rlama run rag1`,
 
 			answer, err := ragService.Query(rag, question)
 			if err != nil {
-				fmt.Printf("Erreur: %s\n", err)
+				fmt.Printf("Error: %s\n", err)
 				continue
 			}
 

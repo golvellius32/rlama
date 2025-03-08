@@ -9,7 +9,7 @@ import (
 	"github.com/dontizi/rlama/internal/repository"
 )
 
-// RagService gère les opérations liées aux systèmes RAG
+// RagService manages operations related to RAG systems
 type RagService struct {
 	documentLoader   *DocumentLoader
 	embeddingService *EmbeddingService
@@ -17,7 +17,7 @@ type RagService struct {
 	ollamaClient     *client.OllamaClient
 }
 
-// NewRagService crée une nouvelle instance de RagService
+// NewRagService creates a new instance of RagService
 func NewRagService() *RagService {
 	return &RagService{
 		documentLoader:   NewDocumentLoader(),
@@ -27,78 +27,78 @@ func NewRagService() *RagService {
 	}
 }
 
-// CreateRag crée un nouveau système RAG
+// CreateRag creates a new RAG system
 func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
-	// Vérifier si le RAG existe déjà
+	// Check if the RAG already exists
 	if rs.ragRepository.Exists(ragName) {
-		return fmt.Errorf("un RAG avec le nom '%s' existe déjà", ragName)
+		return fmt.Errorf("a RAG with name '%s' already exists", ragName)
 	}
 
-	// Charger les documents
+	// Load documents
 	docs, err := rs.documentLoader.LoadDocumentsFromFolder(folderPath)
 	if err != nil {
-		return fmt.Errorf("erreur lors du chargement des documents: %w", err)
+		return fmt.Errorf("error loading documents: %w", err)
 	}
 
 	if len(docs) == 0 {
-		return fmt.Errorf("aucun document valide trouvé dans le dossier %s", folderPath)
+		return fmt.Errorf("no valid documents found in folder %s", folderPath)
 	}
 
-	fmt.Printf("Chargement réussi de %d documents. Génération des embeddings...\n", len(docs))
+	fmt.Printf("Successfully loaded %d documents. Generating embeddings...\n", len(docs))
 	
-	// Créer le système RAG
+	// Create the RAG system
 	rag := domain.NewRagSystem(ragName, modelName)
 
-	// Générer les embeddings pour tous les documents
+	// Generate embeddings for all documents
 	err = rs.embeddingService.GenerateEmbeddings(docs, modelName)
 	if err != nil {
-		return fmt.Errorf("erreur lors de la génération des embeddings: %w", err)
+		return fmt.Errorf("error generating embeddings: %w", err)
 	}
 
-	// Ajouter les documents au RAG
+	// Add documents to the RAG
 	for _, doc := range docs {
 		rag.AddDocument(doc)
 	}
 
-	// Sauvegarder le RAG
+	// Save the RAG
 	err = rs.ragRepository.Save(rag)
 	if err != nil {
-		return fmt.Errorf("erreur lors de la sauvegarde du RAG: %w", err)
+		return fmt.Errorf("error saving the RAG: %w", err)
 	}
 
-	fmt.Printf("RAG créé avec %d documents indexés.\n", len(docs))
+	fmt.Printf("RAG created with %d indexed documents.\n", len(docs))
 	return nil
 }
 
-// LoadRag charge un système RAG
+// LoadRag loads a RAG system
 func (rs *RagService) LoadRag(ragName string) (*domain.RagSystem, error) {
 	rag, err := rs.ragRepository.Load(ragName)
 	if err != nil {
-		return nil, fmt.Errorf("erreur lors du chargement du RAG '%s': %w", ragName, err)
+		return nil, fmt.Errorf("error loading RAG '%s': %w", ragName, err)
 	}
 
 	return rag, nil
 }
 
-// Query effectue une requête sur un système RAG
+// Query performs a query on a RAG system
 func (rs *RagService) Query(rag *domain.RagSystem, query string) (string, error) {
-	// Générer l'embedding pour la requête
+	// Generate embedding for the query
 	queryEmbedding, err := rs.embeddingService.GenerateQueryEmbedding(query, rag.ModelName)
 	if err != nil {
-		return "", fmt.Errorf("erreur lors de la génération de l'embedding pour la requête: %w", err)
+		return "", fmt.Errorf("error generating embedding for query: %w", err)
 	}
 
-	// Rechercher les documents les plus pertinents
+	// Search for the most relevant documents
 	results := rag.VectorStore.Search(queryEmbedding, 3) // Top 3 documents
 
-	// Construire le contexte
+	// Build the context
 	var context strings.Builder
-	context.WriteString("Informations pertinentes:\n\n")
+	context.WriteString("Relevant information:\n\n")
 
 	for _, result := range results {
 		doc := rag.GetDocumentByID(result.ID)
 		if doc != nil {
-			// Limiter la taille du contenu pour éviter les prompts trop longs
+			// Limit content size to avoid prompts that are too long
 			content := doc.Content
 			if len(content) > 1000 {
 				content = content[:1000] + "..."
@@ -107,19 +107,19 @@ func (rs *RagService) Query(rag *domain.RagSystem, query string) (string, error)
 		}
 	}
 
-	// Construire le prompt
-	prompt := fmt.Sprintf(`Vous êtes un assistant IA utile. Utilisez les informations ci-dessous pour répondre à la question.
+	// Build the prompt
+	prompt := fmt.Sprintf(`You are a helpful AI assistant. Use the information below to answer the question.
 
 %s
 
 Question: %s
 
-Répondez de manière concise en vous basant uniquement sur les informations fournies ci-dessus:`, context.String(), query)
+Answer concisely based only on the information provided above:`, context.String(), query)
 
-	// Générer la réponse
+	// Generate the response
 	response, err := rs.ollamaClient.GenerateCompletion(rag.ModelName, prompt)
 	if err != nil {
-		return "", fmt.Errorf("erreur lors de la génération de la réponse: %w", err)
+		return "", fmt.Errorf("error generating response: %w", err)
 	}
 
 	return response, nil

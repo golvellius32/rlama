@@ -15,17 +15,17 @@ import (
 	"github.com/dontizi/rlama/internal/domain"
 )
 
-// DocumentLoader se charge de charger les documents depuis le système de fichiers
+// DocumentLoader is responsible for loading documents from the file system
 type DocumentLoader struct {
 	supportedExtensions map[string]bool
-	extractorPath       string // Chemin vers l'extracteur externe
+	extractorPath       string // Path to the external extractor
 }
 
-// NewDocumentLoader crée une nouvelle instance de DocumentLoader
+// NewDocumentLoader creates a new instance of DocumentLoader
 func NewDocumentLoader() *DocumentLoader {
 	return &DocumentLoader{
 		supportedExtensions: map[string]bool{
-			// Texte simple
+			// Plain text
 			".txt":   true,
 			".md":    true,
 			".html":  true,
@@ -36,7 +36,7 @@ func NewDocumentLoader() *DocumentLoader {
 			".xml":   true,
 			".yaml":  true,
 			".yml":   true,
-			// Code source
+			// Source code
 			".go":    true,
 			".py":    true,
 			".js":    true,
@@ -61,67 +61,67 @@ func NewDocumentLoader() *DocumentLoader {
 			".xls":   true,
 			".epub":  true,
 		},
-		// On utilisera pdftotext si disponible
+		// We'll use pdftotext if available
 		extractorPath: findExternalExtractor(),
 	}
 }
 
-// findExternalExtractor cherche des outils d'extraction externes
+// findExternalExtractor looks for external extraction tools
 func findExternalExtractor() string {
-	// Priorité des extracteurs de texte
+	// Priority of text extractors
 	extractors := []string{
-		"pdftotext", // Pour les PDF (Poppler-utils)
+		"pdftotext", // For PDFs (Poppler-utils)
 		"textutil",  // macOS
-		"catdoc",    // Pour .doc
-		"unrtf",     // Pour .rtf
+		"catdoc",    // For .doc
+		"unrtf",     // For .rtf
 	}
 
 	for _, extractor := range extractors {
 		path, err := exec.LookPath(extractor)
 		if err == nil {
-			fmt.Printf("Extracteur externe trouvé: %s\n", path)
+			fmt.Printf("External extractor found: %s\n", path)
 			return path
 		}
 	}
 
-	fmt.Println("Aucun extracteur externe trouvé. L'extraction de texte sera limitée.")
+	fmt.Println("No external extractor found. Text extraction will be limited.")
 	return ""
 }
 
-// LoadDocumentsFromFolder charge tous les documents supportés du dossier spécifié
+// LoadDocumentsFromFolder loads all supported documents from the specified folder
 func (dl *DocumentLoader) LoadDocumentsFromFolder(folderPath string) ([]*domain.Document, error) {
 	var documents []*domain.Document
 	var supportedFiles []string
 	var unsupportedFiles []string
 
-	// Vérifie si le dossier existe
+	// Check if the folder exists
 	info, err := os.Stat(folderPath)
 	if os.IsNotExist(err) {
-		// Essayer de créer le dossier
+		// Try to create the folder
 		if err := os.MkdirAll(folderPath, 0755); err != nil {
-			return nil, fmt.Errorf("le dossier '%s' n'existe pas et ne peut pas être créé: %w", folderPath, err)
+			return nil, fmt.Errorf("folder '%s' does not exist and cannot be created: %w", folderPath, err)
 		}
-		fmt.Printf("Le dossier '%s' a été créé.\n", folderPath)
-		// Récupérer les informations du dossier nouvellement créé
+		fmt.Printf("Folder '%s' has been created.\n", folderPath)
+		// Get information about the newly created folder
 		info, err = os.Stat(folderPath)
 		if err != nil {
-			return nil, fmt.Errorf("impossible d'accéder au dossier '%s': %w", folderPath, err)
+			return nil, fmt.Errorf("unable to access folder '%s': %w", folderPath, err)
 		}
 	} else if err != nil {
-		return nil, fmt.Errorf("impossible d'accéder au dossier '%s': %w", folderPath, err)
+		return nil, fmt.Errorf("unable to access folder '%s': %w", folderPath, err)
 	}
 	
 	if !info.IsDir() {
-		return nil, fmt.Errorf("le chemin spécifié n'est pas un dossier: %s", folderPath)
+		return nil, fmt.Errorf("the specified path is not a folder: %s", folderPath)
 	}
 
-	// Vérification préliminaire des fichiers
+	// Preliminary file check
 	err = filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Ignore les dossiers et les fichiers cachés (commençant par .)
+		// Ignore folders and hidden files (starting with .)
 		if info.IsDir() || strings.HasPrefix(filepath.Base(path), ".") {
 			return nil
 		}
@@ -136,58 +136,58 @@ func (dl *DocumentLoader) LoadDocumentsFromFolder(folderPath string) ([]*domain.
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("erreur lors de l'analyse du dossier: %w", err)
+		return nil, fmt.Errorf("error while analyzing folder: %w", err)
 	}
 
-	// Affiche des infos sur les fichiers trouvés
+	// Display info about found files
 	if len(supportedFiles) == 0 {
 		if len(unsupportedFiles) == 0 {
-			return nil, fmt.Errorf("le dossier '%s' est vide. Veuillez y ajouter des documents avant de créer un RAG", folderPath)
+			return nil, fmt.Errorf("folder '%s' is empty. Please add documents before creating a RAG", folderPath)
 		} else {
-			extensionsMsg := "Extensions supportées: "
+			extensionsMsg := "Supported extensions: "
 			for ext := range dl.supportedExtensions {
 				extensionsMsg += ext + " "
 			}
-			return nil, fmt.Errorf("aucun fichier supporté trouvé dans '%s'. %d fichiers non supportés détectés.\n%s", 
+			return nil, fmt.Errorf("no supported files found in '%s'. %d unsupported files detected.\n%s", 
 				folderPath, len(unsupportedFiles), extensionsMsg)
 		}
 	}
 
-	fmt.Printf("Trouvé %d fichiers supportés et %d fichiers non supportés.\n", len(supportedFiles), len(unsupportedFiles))
+	fmt.Printf("Found %d supported files and %d unsupported files.\n", len(supportedFiles), len(unsupportedFiles))
 	
-	// Tentative d'installation des dépendances si possible
+	// Try to install dependencies if possible
 	dl.tryInstallDependencies()
 	
-	// Traiter les fichiers supportés
+	// Process supported files
 	for _, path := range supportedFiles {
 		ext := strings.ToLower(filepath.Ext(path))
 		
-		// Extraction du texte à l'aide de plusieurs méthodes
+		// Text extraction using multiple methods
 		textContent, err := dl.extractText(path, ext)
 		if err != nil {
-			fmt.Printf("Avertissement: impossible d'extraire le texte de %s: %v\n", path, err)
-			fmt.Println("Tentative d'extraction en tant que texte brut...")
+			fmt.Printf("Warning: unable to extract text from %s: %v\n", path, err)
+			fmt.Println("Attempting extraction as raw text...")
 			
-			// Tentative de lecture en tant que fichier texte
+			// Try reading as a text file
 			rawContent, err := ioutil.ReadFile(path)
 			if err != nil {
-				fmt.Printf("Échec de la lecture brute de %s: %v\n", path, err)
+				fmt.Printf("Failed to read raw %s: %v\n", path, err)
 				continue
 			}
 			
 			textContent = string(rawContent)
 		}
 
-		// Vérifier que le contenu n'est pas vide
+		// Check that the content is not empty
 		if strings.TrimSpace(textContent) == "" {
-			fmt.Printf("Avertissement: aucun texte extrait de %s\n", path)
+			fmt.Printf("Warning: no text extracted from %s\n", path)
 			
-			// Pour les PDF, tenter une dernière méthode
+			// For PDFs, try one last method
 			if ext == ".pdf" {
-				fmt.Println("Tentative d'extraction avec OCR (si installé)...")
+				fmt.Println("Attempting extraction with OCR (if installed)...")
 				ocrText, err := dl.extractWithOCR(path)
 				if err != nil || strings.TrimSpace(ocrText) == "" {
-					fmt.Println("Échec de l'OCR ou non disponible.")
+					fmt.Println("OCR failed or not available.")
 					continue
 				}
 				textContent = ocrText
@@ -196,20 +196,20 @@ func (dl *DocumentLoader) LoadDocumentsFromFolder(folderPath string) ([]*domain.
 			}
 		}
 
-		// Créer un document
+		// Create a document
 		doc := domain.NewDocument(path, textContent)
 		documents = append(documents, doc)
-		fmt.Printf("Document ajouté: %s (%d caractères)\n", filepath.Base(path), len(textContent))
+		fmt.Printf("Document added: %s (%d characters)\n", filepath.Base(path), len(textContent))
 	}
 
 	if len(documents) == 0 {
-		return nil, fmt.Errorf("aucun document avec contenu valide trouvé dans le dossier '%s'", folderPath)
+		return nil, fmt.Errorf("no documents with valid content found in folder '%s'", folderPath)
 	}
 
 	return documents, nil
 }
 
-// extractText extrait le texte d'un fichier en utilisant la méthode appropriée selon le type
+// extractText extracts text from a file using the appropriate method based on type
 func (dl *DocumentLoader) extractText(path string, ext string) (string, error) {
 	switch ext {
 	case ".pdf":
@@ -221,7 +221,7 @@ func (dl *DocumentLoader) extractText(path string, ext string) (string, error) {
 	case ".xlsx", ".xls":
 		return dl.extractFromSpreadsheet(path, ext)
 	default:
-		// Traiter comme un fichier texte
+		// Treat as a text file
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return "", err
@@ -230,23 +230,23 @@ func (dl *DocumentLoader) extractText(path string, ext string) (string, error) {
 	}
 }
 
-// extractFromPDF extrait le texte d'un PDF en utilisant différentes méthodes
+// extractFromPDF extracts text from a PDF using different methods
 func (dl *DocumentLoader) extractFromPDF(path string) (string, error) {
-	// Méthode 1: Utiliser pdftotext si disponible
+	// Method 1: Use pdftotext if available
 	if strings.Contains(dl.extractorPath, "pdftotext") {
-		fmt.Printf("Extraction du PDF avec pdftotext: %s\n", filepath.Base(path))
+		fmt.Printf("Extracting PDF with pdftotext: %s\n", filepath.Base(path))
 		out, err := exec.Command(dl.extractorPath, "-layout", path, "-").Output()
 		if err == nil && len(out) > 0 {
 			return string(out), nil
 		}
-		fmt.Printf("pdftotext a échoué: %v\n", err)
+		fmt.Printf("pdftotext failed: %v\n", err)
 	}
 	
-	// Méthode 2: Tentative avec d'autres outils (pdfinfo, pdftk)
+	// Method 2: Try with other tools (pdfinfo, pdftk)
 	for _, tool := range []string{"pdfinfo", "pdftk"} {
 		toolPath, err := exec.LookPath(tool)
 		if err == nil {
-			fmt.Printf("Tentative d'extraction avec %s\n", tool)
+			fmt.Printf("Attempting extraction with %s\n", tool)
 			var out []byte
 			if tool == "pdfinfo" {
 				out, err = exec.Command(toolPath, path).Output()
@@ -259,23 +259,23 @@ func (dl *DocumentLoader) extractFromPDF(path string) (string, error) {
 		}
 	}
 	
-	// Méthode 3: Dernière tentative, ouvrir comme fichier binaire et extraire les chaînes
-	fmt.Println("Extraction des chaînes de caractères du PDF...")
+	// Method 3: Last attempt, open as binary file and extract strings
+	fmt.Println("Extracting strings from PDF...")
 	return dl.extractStringsFromBinary(path)
 }
 
-// extractFromDocument extrait le texte d'un document Word ou similaire
+// extractFromDocument extracts text from a Word document or similar
 func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, error) {
-	// Méthode 1: Utiliser textutil sur macOS
+	// Method 1: Use textutil on macOS
 	if strings.Contains(dl.extractorPath, "textutil") && (ext == ".docx" || ext == ".doc" || ext == ".rtf") {
-		fmt.Printf("Extraction du document avec textutil: %s\n", filepath.Base(path))
+		fmt.Printf("Extracting document with textutil: %s\n", filepath.Base(path))
 		out, err := exec.Command(dl.extractorPath, "-convert", "txt", "-stdout", path).Output()
 		if err == nil && len(out) > 0 {
 			return string(out), nil
 		}
 	}
 	
-	// Méthode 2: Utiliser catdoc pour .doc
+	// Method 2: Use catdoc for .doc
 	if ext == ".doc" {
 		catdocPath, err := exec.LookPath("catdoc")
 		if err == nil {
@@ -286,7 +286,7 @@ func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, 
 		}
 	}
 	
-	// Méthode 3: Utiliser unrtf pour .rtf
+	// Method 3: Use unrtf for .rtf
 	if ext == ".rtf" {
 		unrtfPath, err := exec.LookPath("unrtf")
 		if err == nil {
@@ -297,19 +297,19 @@ func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, 
 		}
 	}
 	
-	// Méthode 4: Extraire les chaînes
+	// Method 4: Extract strings
 	return dl.extractStringsFromBinary(path)
 }
 
-// extractFromPresentation extrait le texte d'une présentation PowerPoint
+// extractFromPresentation extracts text from a PowerPoint presentation
 func (dl *DocumentLoader) extractFromPresentation(path string, ext string) (string, error) {
-	// Les outils externes pour PowerPoint sont limités
+	// External tools for PowerPoint are limited
 	return dl.extractStringsFromBinary(path)
 }
 
-// extractFromSpreadsheet extrait le texte d'un tableur Excel
+// extractFromSpreadsheet extracts text from an Excel spreadsheet
 func (dl *DocumentLoader) extractFromSpreadsheet(path string, ext string) (string, error) {
-	// Tentative d'utiliser xlsx2csv pour .xlsx
+	// Try to use xlsx2csv for .xlsx
 	if ext == ".xlsx" {
 		xlsx2csvPath, err := exec.LookPath("xlsx2csv")
 		if err == nil {
@@ -320,7 +320,7 @@ func (dl *DocumentLoader) extractFromSpreadsheet(path string, ext string) (strin
 		}
 	}
 	
-	// Tentative d'utiliser xls2csv pour .xls
+	// Try to use xls2csv for .xls
 	if ext == ".xls" {
 		xls2csvPath, err := exec.LookPath("xls2csv")
 		if err == nil {
@@ -331,13 +331,13 @@ func (dl *DocumentLoader) extractFromSpreadsheet(path string, ext string) (strin
 		}
 	}
 	
-	// Extraction des chaînes
+	// Extract strings
 	return dl.extractStringsFromBinary(path)
 }
 
-// extractStringsFromBinary extrait les chaînes de caractères d'un fichier binaire
+// extractStringsFromBinary extracts strings from a binary file
 func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) {
-	// Utiliser l'outil 'strings' si disponible (Unix/Linux/macOS)
+	// Use the 'strings' tool if available (Unix/Linux/macOS)
 	stringsPath, err := exec.LookPath("strings")
 	if err == nil {
 		out, err := exec.Command(stringsPath, path).Output()
@@ -346,7 +346,7 @@ func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) 
 		}
 	}
 	
-	// Implémentation basique de 'strings' en Go
+	// Basic implementation of 'strings' in Go
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -359,7 +359,7 @@ func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) 
 		if (b >= 32 && b <= 126) || b == '\n' || b == '\t' || b == '\r' {
 			currentWord.WriteByte(b)
 		} else {
-			if currentWord.Len() >= 4 { // Mot d'au moins 4 caractères
+			if currentWord.Len() >= 4 { // Word of at least 4 characters
 				result.WriteString(currentWord.String())
 				result.WriteString(" ")
 			}
@@ -374,15 +374,15 @@ func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) 
 	return result.String(), nil
 }
 
-// extractWithOCR tente d'extraire le texte en utilisant un OCR
+// extractWithOCR attempts to extract text using OCR
 func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
-	// Vérifier si tesseract est disponible
+	// Check if tesseract is available
 	tesseractPath, err := exec.LookPath("tesseract")
 	if err != nil {
-		return "", fmt.Errorf("OCR non disponible: tesseract non trouvé")
+		return "", fmt.Errorf("OCR not available: tesseract not found")
 	}
 	
-	// Créer un fichier de sortie temporaire
+	// Create a temporary output file
 	tempDir, err := ioutil.TempDir("", "rlama-ocr")
 	if err != nil {
 		return "", err
@@ -391,31 +391,31 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 	
 	outBasePath := filepath.Join(tempDir, "out")
 	
-	// Pour les PDF, convertir d'abord en images si possible
+	// For PDFs, first convert to images if possible
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext == ".pdf" {
-		// Vérifier si pdftoppm est disponible
+		// Check if pdftoppm is available
 		pdftoppmPath, err := exec.LookPath("pdftoppm")
 		if err == nil {
-			// Convertir le PDF en images
-			fmt.Println("Conversion du PDF en images pour OCR...")
+			// Convert PDF to images
+			fmt.Println("Converting PDF to images for OCR...")
 			cmd := exec.Command(pdftoppmPath, "-png", path, filepath.Join(tempDir, "page"))
 			if err := cmd.Run(); err != nil {
-				return "", fmt.Errorf("échec de la conversion PDF en images: %w", err)
+				return "", fmt.Errorf("failed to convert PDF to images: %w", err)
 			}
 			
-			// OCR sur chaque image
+			// OCR on each image
 			var allText strings.Builder
 			imgFiles, _ := filepath.Glob(filepath.Join(tempDir, "page-*.png"))
 			for _, imgFile := range imgFiles {
-				fmt.Printf("OCR sur %s...\n", filepath.Base(imgFile))
-				cmd := exec.Command(tesseractPath, imgFile, outBasePath, "-l", "fra+eng")
+				fmt.Printf("OCR on %s...\n", filepath.Base(imgFile))
+				cmd := exec.Command(tesseractPath, imgFile, outBasePath, "-l", "eng")
 				if err := cmd.Run(); err != nil {
-					fmt.Printf("Avertissement: OCR échoué pour %s: %v\n", imgFile, err)
+					fmt.Printf("Warning: OCR failed for %s: %v\n", imgFile, err)
 					continue
 				}
 				
-				// Lire le texte extrait
+				// Read the extracted text
 				textBytes, err := ioutil.ReadFile(outBasePath + ".txt")
 				if err != nil {
 					continue
@@ -429,13 +429,13 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 		}
 	}
 	
-	// OCR direct sur le fichier (pour les images)
-	cmd := exec.Command(tesseractPath, path, outBasePath, "-l", "fra+eng")
+	// Direct OCR on the file (for images)
+	cmd := exec.Command(tesseractPath, path, outBasePath, "-l", "eng")
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("échec de l'OCR: %w", err)
+		return "", fmt.Errorf("OCR failed: %w", err)
 	}
 	
-	// Lire le texte extrait
+	// Read the extracted text
 	textBytes, err := ioutil.ReadFile(outBasePath + ".txt")
 	if err != nil {
 		return "", err
@@ -444,23 +444,23 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 	return string(textBytes), nil
 }
 
-// tryInstallDependencies tente d'installer des dépendances si nécessaire
+// tryInstallDependencies attempts to install dependencies if necessary
 func (dl *DocumentLoader) tryInstallDependencies() {
-	// Vérifier si pip est disponible (pour les outils Python)
+	// Check if pip is available (for Python tools)
 	pipPath, err := exec.LookPath("pip3")
 	if err != nil {
 		pipPath, err = exec.LookPath("pip")
 	}
 	
 	if err == nil {
-		fmt.Println("Vérification des outils Python d'extraction de texte...")
-		// Tenter d'installer des packages utiles
+		fmt.Println("Checking Python text extraction tools...")
+		// Try to install useful packages
 		for _, pkg := range []string{"pdfminer.six", "docx2txt", "xlsx2csv"} {
 			cmd := exec.Command(pipPath, "show", pkg)
 			if err := cmd.Run(); err != nil {
-				fmt.Printf("Installation de %s...\n", pkg)
+				fmt.Printf("Installing %s...\n", pkg)
 				installCmd := exec.Command(pipPath, "install", "--user", pkg)
-				installCmd.Run() // Ignorer les erreurs
+				installCmd.Run() // Ignore errors
 			}
 		}
 	}

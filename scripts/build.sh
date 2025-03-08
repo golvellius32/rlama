@@ -1,11 +1,11 @@
 #!/bin/bash
-# Script de compilation pour RLAMA
+# Build script for RLAMA
 
 VERSION=$(grep "Version = " cmd/root.go | cut -d'"' -f2)
 PLATFORMS=("windows/amd64" "windows/386" "darwin/amd64" "darwin/arm64" "linux/amd64" "linux/arm64")
 BINARY_NAME="rlama"
 
-echo "Compilation de RLAMA v${VERSION}..."
+echo "Building RLAMA v${VERSION}..."
 
 rm -rf ./dist
 mkdir -p ./dist
@@ -21,21 +21,21 @@ do
         output_name+='.exe'
     fi
 
-    echo "Compilation pour $GOOS/$GOARCH..."
+    echo "Building for $GOOS/$GOARCH..."
     env GOOS=$GOOS GOARCH=$GOARCH go build -o ./dist/$output_name
     
     if [ $? -ne 0 ]; then
-        echo "Erreur lors de la compilation pour $GOOS/$GOARCH"
+        echo "Error building for $GOOS/$GOARCH"
     else
-        echo "Compilation réussie pour $GOOS/$GOARCH"
+        echo "Successfully built for $GOOS/$GOARCH"
     fi
 done
 
-echo "Création des archives..."
+echo "Creating archives..."
 cd ./dist
 for file in rlama_*
 do
     zip "${file}.zip" "$file"
 done
 
-echo "Compilation terminée!" 
+echo "Build completed!" 

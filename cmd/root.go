@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	// Supprimez ou commentez ces deux lignes si elles ne sont pas utilisées
+	// Remove or comment these two lines if they're not used
 	// "fmt"
 	// "os"
 
@@ -10,44 +10,44 @@ import (
 )
 
 const (
-	Version = "0.1.0" // Version actuelle de RLAMA
+	Version = "0.1.0" // Current version of RLAMA
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "rlama",
-	Short: "RLAMA est un outil CLI pour créer et utiliser des systèmes RAG avec Ollama",
-	Long: `RLAMA (Retrieval-Augmented Language Model Adapter) est un outil en ligne de commande 
-qui simplifie la création et l'utilisation de systèmes RAG (Retrieval-Augmented Generation) 
-basés sur les modèles Ollama.
+	Short: "RLAMA is a CLI tool for creating and using RAG systems with Ollama",
+	Long: `RLAMA (Retrieval-Augmented Language Model Adapter) is a command-line tool 
+that simplifies the creation and use of RAG (Retrieval-Augmented Generation) systems 
+based on Ollama models.
 
-Commandes principales:
-  rag [modèle] [nom-rag] [chemin-dossier]    Crée un nouveau système RAG
-  run [nom-rag]                              Exécute un système RAG existant
-  list                                       Liste tous les systèmes RAG disponibles
-  delete [nom-rag]                           Supprime un système RAG
-  update                                     Vérifie et installe les mises à jour de RLAMA`,
+Main commands:
+  rag [model] [rag-name] [folder-path]    Create a new RAG system
+  run [rag-name]                          Run an existing RAG system
+  list                                    List all available RAG systems
+  delete [rag-name]                       Delete a RAG system
+  update                                  Check and install RLAMA updates`,
 }
 
-// Variable pour stocker le flag de version
+// Variable to store the version flag
 var versionFlag bool
 
-// Execute exécute la commande racine
+// Execute executes the root command
 func Execute() error {
 	return rootCmd.Execute()
 }
 
 func init() {
-	// Ajout du flag --version
-	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Affiche la version de RLAMA")
+	// Add --version flag
+	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Display RLAMA version")
 	
-	// Override de la fonction Run pour gérer le flag --version
+	// Override the Run function to handle the --version flag
 	rootCmd.Run = func(cmd *cobra.Command, args []string) {
 		if versionFlag {
 			fmt.Printf("RLAMA version %s\n", Version)
 			return
 		}
 		
-		// Si aucun argument n'est fourni et --version n'est pas utilisé, afficher l'aide
+		// If no arguments are provided and --version is not used, display help
 		if len(args) == 0 {
 			cmd.Help()
 		}

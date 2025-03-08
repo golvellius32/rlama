@@ -14,70 +14,70 @@ var forceUninstall bool
 
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Désinstalle RLAMA et tous ses fichiers",
-	Long:  `Désinstalle complètement RLAMA en supprimant l'exécutable et tous les fichiers de données associés.`,
+	Short: "Uninstall RLAMA and all its files",
+	Long:  `Completely uninstall RLAMA by removing the executable and all associated data files.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// 1. Vérifier si l'utilisateur a confirmé la suppression
+		// 1. Check if the user confirmed the deletion
 		if !forceUninstall {
-			fmt.Print("Cette action va supprimer RLAMA et toutes vos données. Êtes-vous sûr ? (o/n): ")
+			fmt.Print("This action will remove RLAMA and all your data. Are you sure? (y/n): ")
 			var response string
 			fmt.Scanln(&response)
 			
 			response = strings.ToLower(strings.TrimSpace(response))
-			if response != "o" && response != "oui" {
-				fmt.Println("Désinstallation annulée.")
+			if response != "y" && response != "yes" {
+				fmt.Println("Uninstallation cancelled.")
 				return nil
 			}
 		}
 
-		// 2. Supprimer le répertoire de données
+		// 2. Delete the data directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("impossible de déterminer le répertoire utilisateur: %w", err)
+			return fmt.Errorf("unable to determine user directory: %w", err)
 		}
 		
 		dataDir := filepath.Join(homeDir, ".rlama")
-		fmt.Printf("Suppression du répertoire de données: %s\n", dataDir)
+		fmt.Printf("Removing data directory: %s\n", dataDir)
 		
 		if _, err := os.Stat(dataDir); err == nil {
 			err = os.RemoveAll(dataDir)
 			if err != nil {
-				return fmt.Errorf("impossible de supprimer le répertoire de données: %w", err)
+				return fmt.Errorf("unable to remove data directory: %w", err)
 			}
-			fmt.Println("✓ Répertoire de données supprimé")
+			fmt.Println("✓ Data directory removed")
 		} else {
-			fmt.Println("Le répertoire de données n'existe pas ou a déjà été supprimé")
+			fmt.Println("Data directory doesn't exist or has already been removed")
 		}
 
-		// 3. Supprimer l'exécutable
+		// 3. Remove the executable
 		executablePath := "/usr/local/bin/rlama"
-		fmt.Printf("Suppression de l'exécutable: %s\n", executablePath)
+		fmt.Printf("Removing executable: %s\n", executablePath)
 		
 		if _, err := os.Stat(executablePath); err == nil {
-			// Sous macOS et Linux, nous avons probablement besoin de sudo
+			// On macOS and Linux, we probably need sudo
 			var err error
 			if os.Geteuid() == 0 {
-				// Si nous sommes déjà root
+				// If we're already root
 				err = os.Remove(executablePath)
 			} else {
-				fmt.Println("Vous devrez peut-être entrer votre mot de passe pour supprimer l'exécutable")
+				fmt.Println("You may need to enter your password to remove the executable")
 				err = execCommand("sudo", "rm", executablePath)
 			}
 			
 			if err != nil {
-				return fmt.Errorf("impossible de supprimer l'exécutable: %w", err)
+				return fmt.Errorf("unable to remove executable: %w", err)
 			}
-			fmt.Println("✓ Exécutable supprimé")
+			fmt.Println("✓ Executable removed")
 		} else {
-			fmt.Println("L'exécutable n'existe pas ou a déjà été supprimé")
+			fmt.Println("Executable doesn't exist or has already been removed")
 		}
 
-		fmt.Println("\nRLAMA a été désinstallé avec succès.")
+		fmt.Println("\nRLAMA has been successfully uninstalled.")
 		return nil
 	},
 }
 
-// execCommand exécute une commande système
+// execCommand executes a system command
 func execCommand(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
@@ -87,5 +87,5 @@ func execCommand(name string, args ...string) error {
 
 func init() {
 	rootCmd.AddCommand(uninstallCmd)
-	uninstallCmd.Flags().BoolVarP(&forceUninstall, "force", "f", false, "Désinstaller sans demander de confirmation")
+	uninstallCmd.Flags().BoolVarP(&forceUninstall, "force", "f", false, "Uninstall without asking for confirmation")
 } 
