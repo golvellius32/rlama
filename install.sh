@@ -20,13 +20,37 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Check if Go is installed
-if ! command_exists go; then
-    echo -e "${RED}Go is not installed.${NC}"
-    echo "RLAMA requires Go to be compiled."
-    echo "Install Go from https://golang.org/dl/"
-    exit 1
-fi
+# Determine OS and architecture
+get_os_arch() {
+    local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    local arch=$(uname -m)
+    
+    # Convert architecture to standard format
+    case "$arch" in
+        x86_64)
+            arch="amd64"
+            ;;
+        aarch64|arm64)
+            arch="arm64"
+            ;;
+        *)
+            echo -e "${RED}Unsupported architecture: $arch${NC}"
+            exit 1
+            ;;
+    esac
+    
+    # Handle macOS naming
+    if [ "$os" = "darwin" ]; then
+        os="darwin"
+    elif [ "$os" = "linux" ]; then
+        os="linux"
+    else
+        echo -e "${RED}Unsupported operating system: $os${NC}"
+        exit 1
+    fi
+    
+    echo "${os}_${arch}"
+}
 
 # Check if Ollama is installed
 if ! command_exists ollama; then
@@ -64,44 +88,64 @@ INSTALL_DIR="/usr/local/bin"
 DATA_DIR="$HOME/.rlama"
 
 echo "Installing RLAMA..."
-echo "Cloning repository..."
 
-# Use a temporary directory for cloning and building
+# Determine OS and architecture for downloading the correct binary
+OS_ARCH=$(get_os_arch)
+BINARY_NAME="rlama_${OS_ARCH}"
+DOWNLOAD_URL="https://github.com/dontizi/rlama/releases/latest/download/${BINARY_NAME}"
+
+echo "Downloading RLAMA for $OS_ARCH..."
+
+# Create a temporary directory for downloading
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 
-# Clone the RLAMA repository (replace with your repository URL)
-git clone https://github.com/dontizi/rlama.git .
+# Download the binary
+if command_exists curl; then
+    curl -L -o rlama $DOWNLOAD_URL
+elif command_exists wget; then
+    wget -O rlama $DOWNLOAD_URL
+else
+    echo -e "${RED}Error: Neither curl nor wget is installed.${NC}"
+    exit 1
+fi
 
-# Build
-echo "Building RLAMA..."
-go build -o rlama
+# Make it executable
+chmod +x rlama
 
 # Install
 echo "Installing executable..."
 mkdir -p "$DATA_DIR"
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS - use sudo if necessary for /usr/local/bin
-    if [ -w "$INSTALL_DIR" ]; then
-        cp rlama "$INSTALL_DIR/"
-    else
-        sudo cp rlama "$INSTALL_DIR/"
-    fi
-    chmod +x "$INSTALL_DIR/rlama"
+# Try to install to /usr/local/bin, fall back to ~/.local/bin if permission denied
+if [ -w "$INSTALL_DIR" ]; then
+    mv rlama "$INSTALL_DIR/"
 else
-    # Linux
-    sudo cp rlama "$INSTALL_DIR/"
-    sudo chmod +x "$INSTALL_DIR/rlama"
+    echo "Cannot write to $INSTALL_DIR, trying alternative location..."
+    LOCAL_BIN="$HOME/.local/bin"
+    mkdir -p "$LOCAL_BIN"
+    mv rlama "$LOCAL_BIN/"
+    
+    # Add to PATH if not already there
+    if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
+        echo "Adding $LOCAL_BIN to your PATH..."
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc" 2>/dev/null || true
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    
+    INSTALL_DIR="$LOCAL_BIN"
 fi
 
-# Cleanup
-cd "$HOME"
+# Clean up
+cd - > /dev/null
 rm -rf "$TEMP_DIR"
 
-echo -e "${GREEN}✅ RLAMA has been successfully installed!${NC}"
+echo -e "${GREEN}RLAMA has been successfully installed to $INSTALL_DIR/rlama!${NC}"
+echo "You can now use RLAMA by running the 'rlama' command."
+echo "Run 'rlama --help' to see available commands."
 echo ""
-echo "You can now use RLAMA with the following commands:"
+echo "You can also use RLAMA with the following commands:"
 echo "- rlama rag [model] [rag-name] [folder-path] : Create a new RAG system"
 echo "- rlama run [rag-name] : Run a RAG system"
 echo "- rlama list : List all available RAG systems"
