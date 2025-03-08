@@ -39,8 +39,7 @@ Supported formats include: .txt, .md, .html, .json, .csv, and various source cod
 			// Improve error messages related to Ollama
 			if strings.Contains(err.Error(), "connection refused") {
 				return fmt.Errorf("⚠️ Unable to connect to Ollama.\n"+
-					"Make sure Ollama is installed and running.\n"
-					)
+					"Make sure Ollama is installed and running.\n")
 			}
 			return err
 		}
