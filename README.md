@@ -1,212 +1,191 @@
-# RLAMA - Guide d'utilisation
+# RLAMA - User Guide
 
-## Table des matières
+## Table of Contents
 - [Installation](#installation)
-- [Commandes disponibles](#commandes-disponibles)
-  - [rag - Créer un système RAG](#rag---créer-un-système-rag)
-  - [run - Utiliser un système RAG](#run---utiliser-un-système-rag)
-  - [list - Lister les systèmes RAG](#list---lister-les-systèmes-rag)
-  - [delete - Supprimer un système RAG](#delete---supprimer-un-système-rag)
-  - [update - Mettre à jour RLAMA](#update---mettre-à-jour-rlama)
-  - [version - Afficher la version](#version---afficher-la-version)
-- [Désinstallation](#désinstallation)
-- [Formats de documents supportés](#formats-de-documents-supportés)
-- [Dépannage](#dépannage)
+- [Available Commands](#available-commands)
+  - [rag - Create a RAG system](#rag---create-a-rag-system)
+  - [run - Use a RAG system](#run---use-a-rag-system)
+  - [list - List RAG systems](#list---list-rag-systems)
+  - [delete - Delete a RAG system](#delete---delete-a-rag-system)
+  - [update - Update RLAMA](#update---update-rlama)
+  - [version - Display version](#version---display-version)
+- [Uninstallation](#uninstallation)
+- [Supported Document Formats](#supported-document-formats)
+- [Troubleshooting](#troubleshooting)
 
 ## Installation
 
-### Prérequis
-- [Go](https://golang.org/doc/install) 1.21 ou supérieur
-- [Ollama](https://ollama.ai/) installé et en cours d'exécution
+### Prerequisites
+- [Go](https://golang.org/doc/install) 1.21 or higher
+- [Ollama](https://ollama.ai/) installed and running
 
-### Installation depuis GitHub
-
-```bash
-# Cloner le dépôt
-git clone https://github.com/dontizi/rlama.git
-cd rlama
-
-# Compiler et installer
-go install
-
-# Installer les dépendances (optionnel mais recommandé)
-chmod +x scripts/install_deps.sh
-./scripts/install_deps.sh
-```
-
-### Installation depuis les releases
-
-1. Visitez la [page des releases](https://github.com/dontizi/rlama/releases) sur GitHub.
-2. Téléchargez le binaire correspondant à votre système d'exploitation et architecture.
-3. Extrayez le binaire et placez-le dans un dossier de votre `PATH`.
+### Installation from terminal
 
 ```bash
-# Exemple pour Linux/macOS
-chmod +x rlama
-sudo mv rlama /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/dontizi/rlama/main/install.sh | sh
 ```
 
-## Commandes disponibles
 
-Vous pouvez obtenir de l'aide sur toutes les commandes en utilisant:
+## Available Commands
+
+You can get help on all commands by using:
 
 ```bash
 rlama --help
 ```
 
-### rag - Créer un système RAG
+### rag - Create a RAG system
 
-Crée un nouveau système RAG en indexant tous les documents du dossier spécifié.
+Creates a new RAG system by indexing all documents in the specified folder.
 
 ```bash
-rlama rag [modèle] [nom-rag] [chemin-dossier]
+rlama rag [model] [rag-name] [folder-path]
 ```
 
-**Paramètres:**
-- `modèle`: Nom du modèle Ollama à utiliser (ex: llama3, mistral, gemma).
-- `nom-rag`: Nom unique pour identifier votre système RAG.
-- `chemin-dossier`: Chemin vers le dossier contenant vos documents.
+**Parameters:**
+- `model`: Name of the Ollama model to use (e.g., llama3, mistral, gemma).
+- `rag-name`: Unique name to identify your RAG system.
+- `folder-path`: Path to the folder containing your documents.
 
-**Exemple:**
+**Example:**
 
 ```bash
 rlama rag llama3 documentation ./docs
 ```
 
-### run - Utiliser un système RAG
+### run - Use a RAG system
 
-Démarre une session interactive pour interagir avec un système RAG existant.
+Starts an interactive session to interact with an existing RAG system.
 
 ```bash
-rlama run [nom-rag]
+rlama run [rag-name]
 ```
 
-**Paramètres:**
-- `nom-rag`: Nom du système RAG à utiliser.
+**Parameters:**
+- `rag-name`: Name of the RAG system to use.
 
-**Exemple:**
+**Example:**
 
 ```bash
 rlama run documentation
-> Comment installer le projet?
-> Quelles sont les fonctionnalités principales?
+> How do I install the project?
+> What are the main features?
 > exit
 ```
 
-### list - Lister les systèmes RAG
+### list - List RAG systems
 
-Affiche la liste de tous les systèmes RAG disponibles.
+Displays a list of all available RAG systems.
 
 ```bash
 rlama list
 ```
 
-### delete - Supprimer un système RAG
+### delete - Delete a RAG system
 
-Supprime définitivement un système RAG et tous ses documents indexés.
-
-```bash
-rlama delete [nom-rag] [--force/-f]
-```
-
-**Paramètres:**
-- `nom-rag`: Nom du système RAG à supprimer.
-- `--force` ou `-f`: (Optionnel) Supprimer sans demander de confirmation.
-
-**Exemple:**
+Permanently deletes a RAG system and all its indexed documents.
 
 ```bash
-rlama delete ancien-projet
+rlama delete [rag-name] [--force/-f]
 ```
 
-Ou pour supprimer sans confirmation:
+**Parameters:**
+- `rag-name`: Name of the RAG system to delete.
+- `--force` or `-f`: (Optional) Delete without asking for confirmation.
+
+**Example:**
 
 ```bash
-rlama delete ancien-projet --force
+rlama delete old-project
 ```
 
-### update - Mettre à jour RLAMA
+Or to delete without confirmation:
 
-Vérifie si une nouvelle version de RLAMA est disponible et l'installe.
+```bash
+rlama delete old-project --force
+```
+
+### update - Update RLAMA
+
+Checks if a new version of RLAMA is available and installs it.
 
 ```bash
 rlama update [--force/-f]
 ```
 
 **Options:**
-- `--force` ou `-f`: (Optionnel) Mettre à jour sans demander de confirmation.
+- `--force` or `-f`: (Optional) Update without asking for confirmation.
 
-### version - Afficher la version
+### version - Display version
 
-Affiche la version actuelle de RLAMA.
+Displays the current version of RLAMA.
 
 ```bash
 rlama --version
 ```
 
-ou
+or
 
 ```bash
 rlama -v
 ```
 
-## Désinstallation
+## Uninstallation
 
-Pour désinstaller RLAMA:
+To uninstall RLAMA:
 
-### Suppression du binaire
+### Removing the binary
 
-Si vous avez installé via `go install`:
+If you installed via `go install`:
 
 ```bash
 rlama uninstall
 ```
 
-### Suppression des données
+### Removing data
 
-RLAMA stocke ses données dans `~/.rlama`. Pour les supprimer:
+RLAMA stores its data in `~/.rlama`. To remove it:
 
 ```bash
 rm -rf ~/.rlama
 ```
 
-## Formats de documents supportés
+## Supported Document Formats
 
-RLAMA prend en charge de nombreux formats de fichiers:
+RLAMA supports many file formats:
 
-- **Texte**: `.txt`, `.md`, `.html`, `.json`, `.csv`, `.yaml`, `.yml`, `.xml`
+- **Text**: `.txt`, `.md`, `.html`, `.json`, `.csv`, `.yaml`, `.yml`, `.xml`
 - **Code**: `.go`, `.py`, `.js`, `.java`, `.c`, `.cpp`, `.h`, `.rb`, `.php`, `.rs`, `.swift`, `.kt`
 - **Documents**: `.pdf`, `.docx`, `.doc`, `.rtf`, `.odt`, `.pptx`, `.ppt`, `.xlsx`, `.xls`, `.epub`
 
-L'installation des dépendances via `install_deps.sh` est recommandée pour améliorer le support de certains formats.
+Installing dependencies via `install_deps.sh` is recommended to improve support for certain formats.
 
-## Dépannage
+## Troubleshooting
 
-### Ollama n'est pas accessible
+### Ollama is not accessible
 
-Si vous rencontrez des erreurs de connexion à Ollama:
-1. Vérifiez qu'Ollama est en cours d'exécution.
-2. Ollama doit être accessible à l'adresse `http://localhost:11434`.
-3. Vérifiez les logs d'Ollama pour d'éventuelles erreurs.
+If you encounter connection errors to Ollama:
+1. Check that Ollama is running.
+2. Ollama must be accessible at `http://localhost:11434`.
+3. Check Ollama logs for potential errors.
 
-### Problèmes d'extraction de texte
+### Text extraction issues
 
-Si vous rencontrez des problèmes avec certains formats:
-1. Installez les dépendances via `./scripts/install_deps.sh`.
-2. Vérifiez que votre système possède les outils requis (`pdftotext`, `tesseract`, etc.).
+If you encounter problems with certain formats:
+1. Install dependencies via `./scripts/install_deps.sh`.
+2. Verify that your system has the required tools (`pdftotext`, `tesseract`, etc.).
 
-### Le RAG ne trouve pas d'informations pertinentes
+### The RAG doesn't find relevant information
 
-Si les réponses ne sont pas pertinentes:
-1. Vérifiez que les documents sont bien indexés avec `rlama list`.
-2. Assurez-vous que le contenu des documents est bien extrait.
-3. Essayez de reformuler votre question de manière plus précise.
+If the answers are not relevant:
+1. Check that the documents are properly indexed with `rlama list`.
+2. Make sure the content of the documents is properly extracted.
+3. Try rephrasing your question more precisely.
 
-### Autres problèmes
+### Other issues
 
-Pour tout autre problème, veuillez ouvrir une issue sur le [dépôt GitHub](https://github.com/dontizi/rlama/issues) en fournissant:
-1. La commande exacte utilisée.
-2. La sortie complète de la commande.
-3. Votre système d'exploitation et architecture.
-4. La version de RLAMA (`rlama --version`).
-
+For any other issues, please open an issue on the [GitHub repository](https://github.com/dontizi/rlama/issues) providing:
+1. The exact command used.
+2. The complete output of the command.
+3. Your operating system and architecture.
+4. The RLAMA version (`rlama --version`).
