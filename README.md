@@ -1,5 +1,7 @@
 # RLAMA - User Guide
 RLAMA is a powerful AI-driven question-answering tool for your documents, seamlessly integrating with your local Ollama models. It enables you to create, manage, and interact with Retrieval-Augmented Generation (RAG) systems tailored to your documentation needs.
+
+
 [![RLAMA Demonstration](https://img.youtube.com/vi/EIsQnBqeQxQ/0.jpg)](https://www.youtube.com/watch?v=EIsQnBqeQxQ)
 
 ## Table of Contents
