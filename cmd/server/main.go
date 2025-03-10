@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/yourusername/rlama/api" // Update with your module name
+	"github.com/golvellius32/rlama/api" // Update with your module name
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/dontizi/rlama
+module github.com/golvelllius32/rlama
 
 go 1.21.0
 
