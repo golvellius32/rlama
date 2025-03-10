@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golvellius32/rlama/internal/client"
+	"github.com/golvellius32/rlama/internal/service"
 	"github.com/spf13/cobra"
-	"github.com/dontizi/rlama/internal/service"
-	"github.com/dontizi/rlama/internal/client"
 )
 
 var runCmd = &cobra.Command{
@@ -67,4 +67,4 @@ Example: rlama run rag1`,
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-} 
+}

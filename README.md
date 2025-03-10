@@ -187,7 +187,7 @@ If the answers are not relevant:
 
 ### Other issues
 
-For any other issues, please open an issue on the [GitHub repository](https://github.com/dontizi/rlama/issues) providing:
+For any other issues, please open an issue on the [GitHub repository](https://github.com/golvellius32/rlama/issues) providing:
 1. The exact command used.
 2. The complete output of the command.
 3. Your operating system and architecture.

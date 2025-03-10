@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golvellius32/rlama/internal/repository"
 	"github.com/spf13/cobra"
-	"github.com/dontizi/rlama/internal/repository"
 )
 
 var forceDelete bool
@@ -29,7 +29,7 @@ var deleteCmd = &cobra.Command{
 			fmt.Printf("Are you sure you want to permanently delete the RAG system '%s'? (y/n): ", ragName)
 			var response string
 			fmt.Scanln(&response)
-			
+
 			response = strings.ToLower(strings.TrimSpace(response))
 			if response != "y" && response != "yes" {
 				fmt.Println("Deletion cancelled.")
@@ -51,4 +51,4 @@ var deleteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 	deleteCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Delete without asking for confirmation")
-} 
+}

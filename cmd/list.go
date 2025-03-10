@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/golvellius32/rlama/internal/repository"
 	"github.com/spf13/cobra"
-	"github.com/dontizi/rlama/internal/repository"
 )
 
 var listCmd = &cobra.Command{
@@ -26,29 +26,29 @@ var listCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Available RAG systems (%d found):\n\n", len(ragNames))
-		
+
 		// Use tabwriter for aligned display
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "NAME\tMODEL\tCREATED ON\tDOCUMENTS")
-		
+
 		for _, name := range ragNames {
 			rag, err := repo.Load(name)
 			if err != nil {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, "error", "error", "error")
 				continue
 			}
-			
+
 			// Format the date
 			createdAt := rag.CreatedAt.Format("2006-01-02 15:04:05")
-			
+
 			fmt.Fprintf(w, "%s\t%s\t%s\t%d\n", rag.Name, rag.ModelName, createdAt, len(rag.Documents))
 		}
 		w.Flush()
-		
+
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-} 
+}

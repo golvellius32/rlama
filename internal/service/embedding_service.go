@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/dontizi/rlama/internal/client"
-	"github.com/dontizi/rlama/internal/domain"
+	"github.com/golvellius32/rlama/internal/client"
+	"github.com/golvellius32/rlama/internal/domain"
 )
 
 // EmbeddingService manages the generation of embeddings for documents
@@ -44,4 +44,4 @@ func (es *EmbeddingService) GenerateQueryEmbedding(query string, modelName strin
 	}
 
 	return embedding, nil
-} 
+}

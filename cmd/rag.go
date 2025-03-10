@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golvellius32/rlama/internal/client"
+	"github.com/golvellius32/rlama/internal/service"
 	"github.com/spf13/cobra"
-	"github.com/dontizi/rlama/internal/service"
-	"github.com/dontizi/rlama/internal/client"
 )
 
 var ragCmd = &cobra.Command{
@@ -30,7 +30,7 @@ Supported formats include: .txt, .md, .html, .json, .csv, and various source cod
 		}
 
 		// Display a message to indicate that the process has started
-		fmt.Printf("Creating RAG '%s' with model '%s' from folder '%s'...\n", 
+		fmt.Printf("Creating RAG '%s' with model '%s' from folder '%s'...\n",
 			ragName, modelName, folderPath)
 
 		ragService := service.NewRagService()
@@ -38,7 +38,7 @@ Supported formats include: .txt, .md, .html, .json, .csv, and various source cod
 		if err != nil {
 			// Improve error messages related to Ollama
 			if strings.Contains(err.Error(), "connection refused") {
-				return fmt.Errorf("⚠️ Unable to connect to Ollama.\n"+
+				return fmt.Errorf("⚠️ Unable to connect to Ollama.\n" +
 					"Make sure Ollama is installed and running.\n")
 			}
 			return err
@@ -51,4 +51,4 @@ Supported formats include: .txt, .md, .html, .json, .csv, and various source cod
 
 func init() {
 	rootCmd.AddCommand(ragCmd)
-} 
+}

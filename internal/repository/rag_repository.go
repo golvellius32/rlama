@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dontizi/rlama/internal/domain"
-	"github.com/dontizi/rlama/pkg/vector"
+	"github.com/golvellius32/rlama/internal/domain"
+	"github.com/golvellius32/rlama/pkg/vector"
 )
 
 // RagRepository manages the persistence of RAG systems
@@ -22,12 +22,12 @@ func NewRagRepository() *RagRepository {
 	if err != nil {
 		homeDir = "."
 	}
-	
+
 	basePath := filepath.Join(homeDir, ".rlama")
-	
+
 	// Create the folder if it doesn't exist
 	os.MkdirAll(basePath, 0755)
-	
+
 	return &RagRepository{
 		basePath: basePath,
 	}
@@ -57,33 +57,33 @@ func (r *RagRepository) Exists(ragName string) bool {
 // Save saves a RAG system
 func (r *RagRepository) Save(rag *domain.RagSystem) error {
 	ragPath := r.getRagPath(rag.Name)
-	
+
 	// Create the folder for this RAG
 	err := os.MkdirAll(ragPath, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to create folder for RAG: %w", err)
 	}
-	
+
 	// Save RAG information
 	ragInfo := *rag // Copy to avoid modifying the original
-	
+
 	// Serialize and save the info.json file
 	infoJSON, err := json.MarshalIndent(ragInfo, "", "  ")
 	if err != nil {
 		return fmt.Errorf("unable to serialize RAG information: %w", err)
 	}
-	
+
 	err = os.WriteFile(r.getRagInfoPath(rag.Name), infoJSON, 0644)
 	if err != nil {
 		return fmt.Errorf("unable to save RAG information: %w", err)
 	}
-	
+
 	// Save the Vector Store
 	err = rag.VectorStore.Save(r.getRagVectorStorePath(rag.Name))
 	if err != nil {
 		return fmt.Errorf("unable to save Vector Store: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -93,26 +93,26 @@ func (r *RagRepository) Load(ragName string) (*domain.RagSystem, error) {
 	if !r.Exists(ragName) {
 		return nil, fmt.Errorf("RAG '%s' does not exist", ragName)
 	}
-	
+
 	// Load RAG information
 	infoBytes, err := os.ReadFile(r.getRagInfoPath(ragName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read RAG information: %w", err)
 	}
-	
+
 	var ragInfo domain.RagSystem
 	err = json.Unmarshal(infoBytes, &ragInfo)
 	if err != nil {
 		return nil, fmt.Errorf("unable to deserialize RAG information: %w", err)
 	}
-	
+
 	// Create a new Vector Store and load it from the file
 	ragInfo.VectorStore = vector.NewStore()
 	err = ragInfo.VectorStore.Load(r.getRagVectorStorePath(ragName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to load Vector Store: %w", err)
 	}
-	
+
 	return &ragInfo, nil
 }
 
@@ -123,13 +123,13 @@ func (r *RagRepository) ListAll() ([]string, error) {
 	if os.IsNotExist(err) {
 		return []string{}, nil // No RAGs available
 	}
-	
+
 	// Read the folder contents
 	entries, err := os.ReadDir(r.basePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read RAGs folder: %w", err)
 	}
-	
+
 	var ragNames []string
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -140,7 +140,7 @@ func (r *RagRepository) ListAll() ([]string, error) {
 			}
 		}
 	}
-	
+
 	return ragNames, nil
 }
 
@@ -150,13 +150,13 @@ func (r *RagRepository) Delete(ragName string) error {
 	if !r.Exists(ragName) {
 		return fmt.Errorf("RAG system '%s' does not exist", ragName)
 	}
-	
+
 	// Delete the complete RAG folder
 	ragPath := r.getRagPath(ragName)
 	err := os.RemoveAll(ragPath)
 	if err != nil {
 		return fmt.Errorf("error while deleting RAG system '%s': %w", ragName, err)
 	}
-	
+
 	return nil
-} 
+}

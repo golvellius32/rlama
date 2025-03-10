@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/dontizi/rlama/pkg/vector"
+	"github.com/golvellius32/rlama/pkg/vector"
 )
 
 // RagSystem représente un système RAG complet
@@ -47,4 +47,4 @@ func (r *RagSystem) GetDocumentByID(id string) *Document {
 		}
 	}
 	return nil
-} 
+}

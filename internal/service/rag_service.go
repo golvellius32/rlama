@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dontizi/rlama/internal/client"
-	"github.com/dontizi/rlama/internal/domain"
-	"github.com/dontizi/rlama/internal/repository"
+	"github.com/golvellius32/rlama/internal/client"
+	"github.com/golvellius32/rlama/internal/domain"
+	"github.com/golvellius32/rlama/internal/repository"
 )
 
 // RagService manages operations related to RAG systems
@@ -50,7 +50,7 @@ func (rs *RagService) CreateRag(modelName, ragName, folderPath string) error {
 	}
 
 	fmt.Printf("Successfully loaded %d documents. Generating embeddings...\n", len(docs))
-	
+
 	// Create the RAG system
 	rag := domain.NewRagSystem(ragName, modelName)
 
@@ -133,4 +133,4 @@ Answer concisely based only on the information provided above:`, context.String(
 	}
 
 	return response, nil
-} 
+}

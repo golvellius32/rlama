@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dontizi/rlama/internal/domain"
+	"github.com/golvellius32/rlama/internal/domain"
 )
 
 // DocumentLoader is responsible for loading documents from the file system
@@ -26,16 +26,16 @@ func NewDocumentLoader() *DocumentLoader {
 	return &DocumentLoader{
 		supportedExtensions: map[string]bool{
 			// Plain text
-			".txt":   true,
-			".md":    true,
-			".html":  true,
-			".htm":   true,
-			".json":  true,
-			".csv":   true,
-			".log":   true,
-			".xml":   true,
-			".yaml":  true,
-			".yml":   true,
+			".txt":  true,
+			".md":   true,
+			".html": true,
+			".htm":  true,
+			".json": true,
+			".csv":  true,
+			".log":  true,
+			".xml":  true,
+			".yaml": true,
+			".yml":  true,
 			// Source code
 			".go":    true,
 			".py":    true,
@@ -50,16 +50,16 @@ func NewDocumentLoader() *DocumentLoader {
 			".swift": true,
 			".kt":    true,
 			// Documents
-			".pdf":   true,
-			".docx":  true,
-			".doc":   true,
-			".rtf":   true,
-			".odt":   true,
-			".pptx":  true,
-			".ppt":   true,
-			".xlsx":  true,
-			".xls":   true,
-			".epub":  true,
+			".pdf":  true,
+			".docx": true,
+			".doc":  true,
+			".rtf":  true,
+			".odt":  true,
+			".pptx": true,
+			".ppt":  true,
+			".xlsx": true,
+			".xls":  true,
+			".epub": true,
 		},
 		// We'll use pdftotext if available
 		extractorPath: findExternalExtractor(),
@@ -110,7 +110,7 @@ func (dl *DocumentLoader) LoadDocumentsFromFolder(folderPath string) ([]*domain.
 	} else if err != nil {
 		return nil, fmt.Errorf("unable to access folder '%s': %w", folderPath, err)
 	}
-	
+
 	if !info.IsDir() {
 		return nil, fmt.Errorf("the specified path is not a folder: %s", folderPath)
 	}
@@ -148,40 +148,40 @@ func (dl *DocumentLoader) LoadDocumentsFromFolder(folderPath string) ([]*domain.
 			for ext := range dl.supportedExtensions {
 				extensionsMsg += ext + " "
 			}
-			return nil, fmt.Errorf("no supported files found in '%s'. %d unsupported files detected.\n%s", 
+			return nil, fmt.Errorf("no supported files found in '%s'. %d unsupported files detected.\n%s",
 				folderPath, len(unsupportedFiles), extensionsMsg)
 		}
 	}
 
 	fmt.Printf("Found %d supported files and %d unsupported files.\n", len(supportedFiles), len(unsupportedFiles))
-	
+
 	// Try to install dependencies if possible
 	dl.tryInstallDependencies()
-	
+
 	// Process supported files
 	for _, path := range supportedFiles {
 		ext := strings.ToLower(filepath.Ext(path))
-		
+
 		// Text extraction using multiple methods
 		textContent, err := dl.extractText(path, ext)
 		if err != nil {
 			fmt.Printf("Warning: unable to extract text from %s: %v\n", path, err)
 			fmt.Println("Attempting extraction as raw text...")
-			
+
 			// Try reading as a text file
 			rawContent, err := ioutil.ReadFile(path)
 			if err != nil {
 				fmt.Printf("Failed to read raw %s: %v\n", path, err)
 				continue
 			}
-			
+
 			textContent = string(rawContent)
 		}
 
 		// Check that the content is not empty
 		if strings.TrimSpace(textContent) == "" {
 			fmt.Printf("Warning: no text extracted from %s\n", path)
-			
+
 			// For PDFs, try one last method
 			if ext == ".pdf" {
 				fmt.Println("Attempting extraction with OCR (if installed)...")
@@ -241,7 +241,7 @@ func (dl *DocumentLoader) extractFromPDF(path string) (string, error) {
 		}
 		fmt.Printf("pdftotext failed: %v\n", err)
 	}
-	
+
 	// Method 2: Try with other tools (pdfinfo, pdftk)
 	for _, tool := range []string{"pdfinfo", "pdftk"} {
 		toolPath, err := exec.LookPath(tool)
@@ -258,7 +258,7 @@ func (dl *DocumentLoader) extractFromPDF(path string) (string, error) {
 			}
 		}
 	}
-	
+
 	// Method 3: Last attempt, open as binary file and extract strings
 	fmt.Println("Extracting strings from PDF...")
 	return dl.extractStringsFromBinary(path)
@@ -274,7 +274,7 @@ func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, 
 			return string(out), nil
 		}
 	}
-	
+
 	// Method 2: Use catdoc for .doc
 	if ext == ".doc" {
 		catdocPath, err := exec.LookPath("catdoc")
@@ -285,7 +285,7 @@ func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, 
 			}
 		}
 	}
-	
+
 	// Method 3: Use unrtf for .rtf
 	if ext == ".rtf" {
 		unrtfPath, err := exec.LookPath("unrtf")
@@ -296,7 +296,7 @@ func (dl *DocumentLoader) extractFromDocument(path string, ext string) (string, 
 			}
 		}
 	}
-	
+
 	// Method 4: Extract strings
 	return dl.extractStringsFromBinary(path)
 }
@@ -319,7 +319,7 @@ func (dl *DocumentLoader) extractFromSpreadsheet(path string, ext string) (strin
 			}
 		}
 	}
-	
+
 	// Try to use xls2csv for .xls
 	if ext == ".xls" {
 		xls2csvPath, err := exec.LookPath("xls2csv")
@@ -330,7 +330,7 @@ func (dl *DocumentLoader) extractFromSpreadsheet(path string, ext string) (strin
 			}
 		}
 	}
-	
+
 	// Extract strings
 	return dl.extractStringsFromBinary(path)
 }
@@ -345,16 +345,16 @@ func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) 
 			return string(out), nil
 		}
 	}
-	
+
 	// Basic implementation of 'strings' in Go
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-	
+
 	var result strings.Builder
 	var currentWord strings.Builder
-	
+
 	for _, b := range data {
 		if (b >= 32 && b <= 126) || b == '\n' || b == '\t' || b == '\r' {
 			currentWord.WriteByte(b)
@@ -366,11 +366,11 @@ func (dl *DocumentLoader) extractStringsFromBinary(path string) (string, error) 
 			currentWord.Reset()
 		}
 	}
-	
+
 	if currentWord.Len() >= 4 {
 		result.WriteString(currentWord.String())
 	}
-	
+
 	return result.String(), nil
 }
 
@@ -381,16 +381,16 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("OCR not available: tesseract not found")
 	}
-	
+
 	// Create a temporary output file
 	tempDir, err := ioutil.TempDir("", "rlama-ocr")
 	if err != nil {
 		return "", err
 	}
 	defer os.RemoveAll(tempDir)
-	
+
 	outBasePath := filepath.Join(tempDir, "out")
-	
+
 	// For PDFs, first convert to images if possible
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext == ".pdf" {
@@ -403,7 +403,7 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 			if err := cmd.Run(); err != nil {
 				return "", fmt.Errorf("failed to convert PDF to images: %w", err)
 			}
-			
+
 			// OCR on each image
 			var allText strings.Builder
 			imgFiles, _ := filepath.Glob(filepath.Join(tempDir, "page-*.png"))
@@ -414,33 +414,33 @@ func (dl *DocumentLoader) extractWithOCR(path string) (string, error) {
 					fmt.Printf("Warning: OCR failed for %s: %v\n", imgFile, err)
 					continue
 				}
-				
+
 				// Read the extracted text
 				textBytes, err := ioutil.ReadFile(outBasePath + ".txt")
 				if err != nil {
 					continue
 				}
-				
+
 				allText.WriteString(string(textBytes))
 				allText.WriteString("\n\n")
 			}
-			
+
 			return allText.String(), nil
 		}
 	}
-	
+
 	// Direct OCR on the file (for images)
 	cmd := exec.Command(tesseractPath, path, outBasePath, "-l", "eng")
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("OCR failed: %w", err)
 	}
-	
+
 	// Read the extracted text
 	textBytes, err := ioutil.ReadFile(outBasePath + ".txt")
 	if err != nil {
 		return "", err
 	}
-	
+
 	return string(textBytes), nil
 }
 
@@ -451,7 +451,7 @@ func (dl *DocumentLoader) tryInstallDependencies() {
 	if err != nil {
 		pipPath, err = exec.LookPath("pip")
 	}
-	
+
 	if err == nil {
 		fmt.Println("Checking Python text extraction tools...")
 		// Try to install useful packages
@@ -464,4 +464,4 @@ func (dl *DocumentLoader) tryInstallDependencies() {
 			}
 		}
 	}
-} 
+}
