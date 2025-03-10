@@ -1,15 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
-	"github.com/dontizi/rlama/cmd"
+	"github.com/golvellius32/rlama/api"
 )
 
 func main() {
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Erreur: %s\n", err)
-		os.Exit(1)
-	}
-} 
+	router := api.SetupRouter()
+	log.Println("Starting RLAMA API server on http://localhost:3001")
+	router.Run(":3001")
+}
